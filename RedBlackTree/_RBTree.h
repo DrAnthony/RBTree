@@ -1,7 +1,11 @@
 //红黑树
 #ifndef RBTREE_H
 #define RBTREE_H
-#define NIL NULL
+#ifndef NULL
+#define NULL ((void*)0)
+#endif // !1
+
+
 
 enum BOOL_VAL { FALSE, TRUE };
 enum COLOR { RED, BLACK };
@@ -12,9 +16,9 @@ template <typename T>
 struct TreeNode{
   T value;
   int color;
-  TreeNode<T>* l;
-  TreeNode<T>* r;
-  TreeNode<T>* p;
+  TreeNode<T>* l=NULL;
+  TreeNode<T>* r=NULL;
+  TreeNode<T>* p=NULL;
 };
 
 template <typename ElementType>
@@ -22,7 +26,7 @@ class RBTree {
 private:
   void LEFT_RORATE(const TreeNode<ElementType>* node);//左旋
   void RIGHT_RORATE(const TreeNode<ElementType>* node);//右旋
-  void CHANGE_COLOR(const TreeNode<ElementType>* node);//变色
+  void CHANGE_COLOR(TreeNode<ElementType>* node);//变色
   void freeTree(TreeNode<ElementType>* node);
   int (*cmp)(const ElementType& e1,const ElementType& e2);//比较大小
   int len;
@@ -32,17 +36,18 @@ public:
   //若e1大于e2，返回BIGGER；若e1等于e2，返回EQUAL；若e1小于e2，返回SMALLER
   RBTree(int(*cmp)(const ElementType& e1, const ElementType& e2));
   ~RBTree();
+  TreeNode<ElementType>* getHead();
   void destory();
-  ElementType* get(const ElementType element);
-  ElementType* put(ElementType element);
+  TreeNode<ElementType>* get(const ElementType element);
+  TreeNode<ElementType>* put(ElementType element);
   void remove(ElementType element);
   int length();
 };
 
 template <typename ElementType>
 RBTree<ElementType>::RBTree(int(*_cmp)(const ElementType& e1, const ElementType& e2)) {
-  this->cmp = _cmp;
-  this.len = 0;
+  cmp = _cmp;
+  len = 0;
   nil = NULL;
   head = NULL;
 }
@@ -53,18 +58,28 @@ RBTree<ElementType>::~RBTree() {
 }
 
 template <typename ElementType>
+TreeNode<ElementType>* RBTree<ElementType>::getHead() {
+  return head;
+}
+
+template <typename ElementType>
 void RBTree<ElementType>::LEFT_RORATE(const TreeNode<ElementType>* node) {
-  TreeNode<ElementType>* n = node;
+  TreeNode<ElementType>* n = (TreeNode<ElementType>*)node;
   if (n->r == nil) {
     return;
   }
   if (n==head) {
     head = n->r;
     n->r = head->l;
+    if (n->r != nil) {
+      n->r->p = n;
+    }
     head->l = n;
+    n->p = head;
+    head->p = NULL;
     return;
   }
-  TreeNode<ElementType>* temp = node->p;
+  TreeNode<ElementType>* temp = n->p;
   if (temp->l == n) {
     temp->l = n->r;
   }
@@ -73,47 +88,62 @@ void RBTree<ElementType>::LEFT_RORATE(const TreeNode<ElementType>* node) {
   }
   temp = n->r;
   n->r = temp->l;
+  if (n->r != nil) {
+    n->r->p = n;
+  }
   temp->l = n;
+  temp->p = n->p;
+  n->p = temp;
 }
 
 template <typename ElementType>
 void RBTree<ElementType>::RIGHT_RORATE(const TreeNode<ElementType>* node) {
-  TreeNode<ElementType>* n = node;
+  TreeNode<ElementType>* n = (TreeNode<ElementType>*)node;
   if (n->l == nil) {
     return;
   }
   if (n == head) {
     head = n->l;
     n->l = head->r;
+    if (n->l != nil) {
+      n->l->p = n;
+    }
     head->r = n;
+    n->p = head;
+    head->p = NULL;
     return;
   }
-  TreeNode<ElementType>* temp = node->p;
+  TreeNode<ElementType>* temp = n->p;
   if (temp->l == n) {
     temp->l = n->l;
   }
   else {
     temp->r = n->l;
   }
-  temp = node->l;
+  temp = n->l;
   n->l = temp->r;
+  if (n->l != nil) {
+    n->l->p = n;
+  }
   temp->r = n;
+  temp->p = n->p;
+  n->p = temp;
 }
 
 template <typename ElementType>
-void RBTree<ElementType>::CHANGE_COLOR(const TreeNode<ElementType>* node) {
+void RBTree<ElementType>::CHANGE_COLOR(TreeNode<ElementType>* node) {
   node->color = node->color ? RED : BLACK;
 }
 
 template <typename ElementType>
-ElementType* RBTree<ElementType>::get(ElementType element) {
+TreeNode<ElementType>* RBTree<ElementType>::get(ElementType element) {
   TreeNode<ElementType>* h = head;
   while (1) {
     if (h == nil) {
       return nil;
     }
     if (cmp(element, h->value) == EQUAL) {
-      return h->value;
+      return h;
     }
     else if (cmp(element, h->value) == BIGGER) {
       h = h->l;
@@ -130,16 +160,16 @@ int RBTree<ElementType>::length() {
 }
 
 template <typename ElementType>
-ElementType* RBTree<ElementType>::put(ElementType element) {
+TreeNode<ElementType>* RBTree<ElementType>::put(ElementType element) {
   len++;
   TreeNode<ElementType>* node = new TreeNode<ElementType>;
   node->value = element;
   node->color = RED;
   TreeNode<ElementType>* h = head;
   
-  //1.头节点位空
-  if (h = nil) {
-    h = node;
+  //1.头节点为空
+  if (h == nil) {
+    head = node;
     CHANGE_COLOR(node);
     return node;
   }
@@ -177,13 +207,12 @@ ElementType* RBTree<ElementType>::put(ElementType element) {
   TreeNode<ElementType>* pp;//祖父结点
   //2.2.1结点进行从下到上的调节
   while (1) {
-    CHANGE_COLOR(s);
     p = s->p;
-    if (p == nil) {   
+    if (p == nil) { 
+      CHANGE_COLOR(s);
       return node;
     }
     if (p->color == BLACK) {
-      CHANGE_COLOR(s);
       return node;
     }
     pp = p->p;
@@ -198,25 +227,33 @@ ElementType* RBTree<ElementType>::put(ElementType element) {
     if (LEFT) {
       //父节点为祖父结点左孩子
       if (pp->l == p) {
+        CHANGE_COLOR(s);
+        RIGHT_RORATE(pp);   
         s = p;
       }
       //父节点为祖父节点右孩子
       else {
-        LEFT_RORATE(p);
+        RIGHT_RORATE(p);
+        CHANGE_COLOR(p);
+        LEFT_RORATE(pp);
       }
-      RIGHT_RORATE(pp);
+      
     }
     //当前结点为父节点右孩子
     else {
       //父节点为祖父节点右孩子
       if (pp->r == p) {
+        CHANGE_COLOR(s);
+        LEFT_RORATE(pp);
         s = p;
       }
       //父节点为祖父节点左孩子
       else {
-        RIGHT_RORATE(p);
+        LEFT_RORATE(p);
+        CHANGE_COLOR(p);
+        RIGHT_RORATE(pp);
       }
-      LEFT_RORATE(pp);
+      
     }
   }
 }
@@ -245,7 +282,7 @@ void RBTree<ElementType>::remove(ElementType element) {
     node->value = node->l->value;
     node = node->l;
   }
-  else if (node->r != nill) {
+  else if (node->r != nil) {
     node->value = node->r->value;
     node = node->r;
   }
@@ -272,6 +309,7 @@ void RBTree<ElementType>::remove(ElementType element) {
         if (p->color == RED) {
           //3.2.1.1.1为父节点的左孩子
           if (p->l==node) {
+            p->l = nil;
             bro = p->r;
             //3.2.1.1.1.1兄弟节点左孩子为空
             if (bro->l == nil) {
@@ -286,6 +324,7 @@ void RBTree<ElementType>::remove(ElementType element) {
           }
           //3.2.1.1.2为父节点的右孩子
           else {
+            p->r = nil;
             bro = p->l;
             //3.2.1.1.2.1兄弟节点右孩子为空
             if (bro->r == nil) {
@@ -303,11 +342,12 @@ void RBTree<ElementType>::remove(ElementType element) {
         else {
           //3.2.1.2.1为父节点左孩子
           if(p->l==node){
+            p->l = nil;
             bro = p->r;
             //3.2.1.2.1.1兄弟结点为红色
             if (bro->color == RED) {
+              CHANGE_COLOR(bro->l);
               LEFT_RORATE(p);
-              CHANGE_COLOR(p);
               CHANGE_COLOR(bro);
             }
             //3.2.1.2.1.2兄弟结点为黑色,若兄弟结点有孩子，定为红色
@@ -321,7 +361,6 @@ void RBTree<ElementType>::remove(ElementType element) {
               //3.2.1.2.1.2.2兄弟结点右孩子不为空
               else if (bro->r != nil) {
                 CHANGE_COLOR(bro->r);
-                LEFT_RORATE(bro);
                 LEFT_RORATE(p);
               }
               //3.2.1.2.1.2.3兄弟结点孩子均为空
@@ -332,10 +371,11 @@ void RBTree<ElementType>::remove(ElementType element) {
           }
           //3.2.1.2.2为父节点右孩子
           else {
+            p->l = nil;
             bro = p->l;
             //3.2.1.2.2.1兄弟结点为红色
             if (bro->color == RED) {
-              RIGHT_RORATE(p);
+              RIGHT_RORATE(bro->r);
               CHANGE_COLOR(p);
               CHANGE_COLOR(bro);
             }
@@ -343,14 +383,13 @@ void RBTree<ElementType>::remove(ElementType element) {
             else {
               //3.2.1.2.2.2.1兄弟结点左孩子不为空
               if (bro->r != nil) {
-                CHANGE_COLOR(bro->l);
+                CHANGE_COLOR(bro->r);
                 LEFT_RORATE(bro);
                 RIGHT_RORATE(p);
               }
               //3.2.1.2.2.2.2兄弟结点右孩子不为空
               else if (bro->l != nil) {
-                CHANGE_COLOR(bro->r);
-                RIGHT_RORATE(bro);
+                CHANGE_COLOR(bro->l);
                 RIGHT_RORATE(p);
               }
               ////3.2.1.2.2.2.3兄弟结点孩子均为空
