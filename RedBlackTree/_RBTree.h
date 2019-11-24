@@ -297,9 +297,7 @@ void RBTree<ElementType>::remove(ElementType element) {
     p = r->p;
     //当前结点头节点
     if (p == nil) {
-      delete head;
-      head = NULL;
-      return;
+      break;
     }
     if (p->r == r) {
       LEFT = FALSE;
@@ -346,6 +344,10 @@ void RBTree<ElementType>::remove(ElementType element) {
         }
         else {
           bro->color = RED;
+          if (p->color == RED) {
+            CHANGE_COLOR(p);
+            break;
+          }
           r = p;
         }
       }
@@ -366,16 +368,25 @@ void RBTree<ElementType>::remove(ElementType element) {
         }
         else {
           bro->color = RED;
+          if (p->color == RED) {
+            CHANGE_COLOR(p);
+            break;
+          }
           r = p;
         }
       }
     }
   }
-  if (node == node->p->l) {
-    node->p->l = nil;
+  if (node->p != nil) {
+    if (node->p->l == node) {
+      node->p->l = nil;
+    }
+    else {
+      node->p->r = nil;
+    }
   }
   else {
-    node->p->r = nil;
+    head = nil;
   }
   delete node;
   node = NULL;

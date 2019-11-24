@@ -64,7 +64,9 @@ int main() {
   auto h = tree.getHead();
   preOrder(h);
   cout << tree.length()<<"+++++++++++++"<<endl;
-  tree.remove(8);
+  for (int i = 0; i < len; i++) {
+    tree.remove(map[i]);
+  }
   h = tree.getHead();
   preOrder(h);
   cout << tree.length() << "+++++++++++++" << endl;
