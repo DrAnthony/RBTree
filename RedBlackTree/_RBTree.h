@@ -287,120 +287,95 @@ void RBTree<ElementType>::remove(ElementType element) {
     node = node->r;
   }
 
-  TreeNode<ElementType>* p = node->p;
-  
+  TreeNode<ElementType>* p;
+  TreeNode<ElementType>* r = node;
+  TreeNode<ElementType>* bro;
+  BOOL LEFT;
   //3.为无孩子结点，直接删除并调整父节点
-  if (node->l == nil && node->r == nil) {
-    //3.1红色结点
-    if (node->color == RED) {
-      if (p->l == node) {
-        p->l = nil;
+  while (1) {
+    LEFT = TRUE;
+    p = r->p;
+    //当前结点头节点
+    if (p == nil) {
+      delete head;
+      head = NULL;
+      return;
+    }
+    if (p->r == r) {
+      LEFT = FALSE;
+    }
+    //红色结点，跳出
+    if (r->color == RED) {
+      break;
+    }
+
+    //结点为黑色
+    if (LEFT) {
+      bro = p->r;
+    }
+    else {
+      bro = p->l;
+    }
+    //兄弟结点为红，父节点为黑
+    if (bro->color == RED) {
+      CHANGE_COLOR(p);
+      CHANGE_COLOR(bro);
+      if (LEFT) {
+        LEFT_RORATE(p);
       }
       else {
-        p->r = nil;
+        RIGHT_RORATE(p);
       }
     }
-    //3.2黑色结点
+    //兄弟结点为黑
     else {
-      //3.2.1不为头节点
-      if (p != nil) {
-        TreeNode<ElementType>* bro;
-        //3.2.1.1父节点为红
-        if (p->color == RED) {
-          //3.2.1.1.1为父节点的左孩子
-          if (p->l==node) {
-            p->l = nil;
-            bro = p->r;
-            //3.2.1.1.1.1兄弟节点左孩子为空
-            if (bro->l == nil) {
-              LEFT_RORATE(p);
-            }
-            //3.2.1.1.1.2兄弟节点左孩子不为空，定为红色
-            else {
-              RIGHT_RORATE(bro);
-              LEFT_RORATE(p);
-              CHANGE_COLOR(p);
-            }
-          }
-          //3.2.1.1.2为父节点的右孩子
-          else {
-            p->r = nil;
-            bro = p->l;
-            //3.2.1.1.2.1兄弟节点右孩子为空
-            if (bro->r == nil) {
-              RIGHT_RORATE(p);
-            }
-            //3.2.1.1.2.2兄弟节点右孩子不为空，定为红
-            else {
-              LEFT_RORATE(bro);
-              RIGHT_RORATE(p);
-              CHANGE_COLOR(p);
-            }
-          }
+      if (LEFT) {
+        if (bro->r!=nil&&bro->r->color == RED) {
+          bro->color = p->color;
+          if (bro->r != nil) {
+            bro->r->color = BLACK;
+          }       
+          p->color = BLACK;
+          LEFT_RORATE(p);
+          break;
         }
-        //3.2.1.2父节点为黑
+        else if(bro->l!=nil&&bro->l->color==RED){
+          CHANGE_COLOR(bro);
+          CHANGE_COLOR(bro->l);
+          RIGHT_RORATE(bro);
+        }
         else {
-          //3.2.1.2.1为父节点左孩子
-          if(p->l==node){
-            p->l = nil;
-            bro = p->r;
-            //3.2.1.2.1.1兄弟结点为红色
-            if (bro->color == RED) {
-              CHANGE_COLOR(bro->l);
-              LEFT_RORATE(p);
-              CHANGE_COLOR(bro);
-            }
-            //3.2.1.2.1.2兄弟结点为黑色,若兄弟结点有孩子，定为红色
-            else {
-              //3.2.1.2.1.2.1兄弟结点左孩子不为空
-              if (bro->l != nil) {
-                CHANGE_COLOR(bro->l);
-                RIGHT_RORATE(bro);
-                LEFT_RORATE(p);
-              }
-              //3.2.1.2.1.2.2兄弟结点右孩子不为空
-              else if (bro->r != nil) {
-                CHANGE_COLOR(bro->r);
-                LEFT_RORATE(p);
-              }
-              //3.2.1.2.1.2.3兄弟结点孩子均为空
-              else {
-                CHANGE_COLOR(bro);
-              }
-            }
+          bro->color = RED;
+          r = p;
+        }
+      }
+      else {
+        if (bro->l != nil && bro->l->color == RED) {
+          bro->color = p->color;
+          if (bro->l != nil) {
+            bro->l->color = BLACK;
           }
-          //3.2.1.2.2为父节点右孩子
-          else {
-            p->l = nil;
-            bro = p->l;
-            //3.2.1.2.2.1兄弟结点为红色
-            if (bro->color == RED) {
-              RIGHT_RORATE(bro->r);
-              CHANGE_COLOR(p);
-              CHANGE_COLOR(bro);
-            }
-            //3.2.1.2.2.2兄弟结点为黑色，若孩子不为空，必为红色
-            else {
-              //3.2.1.2.2.2.1兄弟结点左孩子不为空
-              if (bro->r != nil) {
-                CHANGE_COLOR(bro->r);
-                LEFT_RORATE(bro);
-                RIGHT_RORATE(p);
-              }
-              //3.2.1.2.2.2.2兄弟结点右孩子不为空
-              else if (bro->l != nil) {
-                CHANGE_COLOR(bro->l);
-                RIGHT_RORATE(p);
-              }
-              ////3.2.1.2.2.2.3兄弟结点孩子均为空
-              else {
-                CHANGE_COLOR(bro);
-              }
-            }
-          }
+          p->color = BLACK;
+          RIGHT_RORATE(p);
+          break;
+        }
+        else if(bro->r != nil && bro->r->color == RED){
+          CHANGE_COLOR(bro);
+          CHANGE_COLOR(bro->r);
+          LEFT_RORATE(bro);
+        }
+        else {
+          bro->color = RED;
+          r = p;
         }
       }
     }
+  }
+  if (node == node->p->l) {
+    node->p->l = nil;
+  }
+  else {
+    node->p->r = nil;
   }
   delete node;
   node = NULL;

@@ -33,6 +33,7 @@ void preOrder(TreeNode<double>* h) {
       cout << "error";
     }
   }
+
   if (h->color) {
     cout << "ºÚ ";
   }
@@ -49,7 +50,7 @@ int main() {
   1,2,3,4,5,6,7,8,9,10,
   11,12,12,13,14,15,45,
   56,45,34,23,34,46,67,
-  78,11,12,21,32,43,4.9
+  78,11,12,21,32,43
   };
   /*
   11,12,12,13,14,15,45,
@@ -64,6 +65,7 @@ int main() {
   preOrder(h);
   cout << tree.length()<<"+++++++++++++"<<endl;
   tree.remove(8);
+  h = tree.getHead();
   preOrder(h);
   cout << tree.length() << "+++++++++++++" << endl;
   return 0;
